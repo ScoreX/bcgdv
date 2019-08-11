@@ -5,8 +5,8 @@ import tornado.ioloop
 import tornado.web
 
 from io import BytesIO
-from tornado.options import parse_command_line
 from PIL import Image
+from tornado.options import parse_command_line
 
 
 S3BUCKET = "dos-progimage"
@@ -21,10 +21,10 @@ logger = logging.getLogger('ProgImage')
 
 class StorageApplication(tornado.web.Application):
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, s3client, *args, **kwargs):
         super(StorageApplication, self).__init__(*args, **kwargs)
 
-        self.s3client = boto3.client('s3')
+        self.s3client = s3client
 
 
 class StorageHandler(tornado.web.RequestHandler):
@@ -54,10 +54,14 @@ class StorageHandler(tornado.web.RequestHandler):
             self._set_error("Conversion to %s is not supported" % format, status=400)
             return
 
-        response = self.application.s3client.get_object(
-            Bucket=S3BUCKET,
-            Key=identifier,
-        )
+        try:
+            response = self.application.s3client.get_object(
+                Bucket=S3BUCKET,
+                Key=identifier,
+            )
+        except self.application.s3client.exceptions.NoSuchKey:
+            self._set_error("%s is not a valid identifier" % identifier)
+            return
 
         image = response['Body'].read()
 
@@ -103,13 +107,25 @@ class StorageHandler(tornado.web.RequestHandler):
         self.write(s3key)
 
 
+def make_app(s3client):
+
+    handlers = [
+        (r"/api/image-service/store", StorageHandler),
+        (r"/api/image-service/retrieve/([a-zA-Z0-9]+)(?:/([a-z]*))?", StorageHandler),
+    ]
+
+    return StorageApplication(
+        s3client,
+        handlers
+    )
+
+
 if __name__ == "__main__":
 
     parse_command_line()
 
-    app = StorageApplication([
-        (r"/api/image-service/store", StorageHandler),
-        (r"/api/image-service/retrieve/([a-zA-Z0-9]+)(?:/([a-z]*))?", StorageHandler),
-    ])
+    client = boto3.client('s3')
+
+    app = make_app(client)
     app.listen(8888)
     tornado.ioloop.IOLoop.current().start()
