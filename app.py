@@ -11,6 +11,11 @@ from PIL import Image
 
 S3BUCKET = "dos-progimage"
 
+FORMATS = {
+    'PNG': 'RGBA',
+    'JPEG': 'RGB'
+}
+
 logger = logging.getLogger('ProgImage')
 
 
@@ -35,6 +40,42 @@ class StorageHandler(tornado.web.RequestHandler):
         self.write(message)
         self.set_status(status)
         self.finish()
+
+    def get(self, identifier, format=None):
+        """ Retrieve image using specified identifier and optionally convert it to a new format
+
+            :param identifier: Unique id for the image
+            :param format: Alternative format to return image in
+        """
+
+        format = format.upper() if format else None
+
+        if format and format not in FORMATS.keys():
+            self._set_error("Conversion to %s is not supported" % format, status=400)
+            return
+
+        response = self.application.s3client.get_object(
+            Bucket=S3BUCKET,
+            Key=identifier,
+        )
+
+        image = response['Body'].read()
+
+        if format:
+            bytes = BytesIO()
+            bytes.write(image)
+            temp = Image.open(bytes)
+
+            if temp.format == format:
+                logger.warning("Image is already in specified format. No conversion required")
+            else:
+                new = BytesIO()
+                temp = temp.convert(FORMATS[format])
+                temp.save(new, format=format)
+                new.seek(0)
+                image = new.read()
+
+        self.write(image)
 
     def post(self):
         """ Store image and return unique identifier
@@ -68,6 +109,7 @@ if __name__ == "__main__":
 
     app = StorageApplication([
         (r"/api/image-service/store", StorageHandler),
+        (r"/api/image-service/retrieve/([a-zA-Z0-9]+)(?:/([a-z]*))?", StorageHandler),
     ])
     app.listen(8888)
     tornado.ioloop.IOLoop.current().start()
