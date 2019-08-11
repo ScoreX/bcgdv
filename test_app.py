@@ -108,4 +108,3 @@ class TestRetrieve(AsyncHTTPTestCase):
     #
     #     self.assertEqual(response.code, 400)
     #     self.assertEqual(response.body, "123 is not a valid identifier")
-
