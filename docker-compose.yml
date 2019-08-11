@@ -1,0 +1,19 @@
+version: '3'
+
+services:
+  storage:
+    build: ./storage
+    command: python3 /code/app.py
+    environment:
+      - AWS_ACCESS_KEY_ID=
+      - AWS_SECRET_ACCESS_KEY=
+
+  rotate:
+    build: ./rotate
+    command: python3 /code/app.py
+
+  web:
+    build: ./web
+    ports:
+      - "8000:80"
+
