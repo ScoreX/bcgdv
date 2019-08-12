@@ -81,7 +81,7 @@ class StorageHandler(tornado.web.RequestHandler):
 
         self.write(image)
 
-    def post(self):
+    def put(self):
         """ Store image and return unique identifier
         """
 
@@ -110,8 +110,8 @@ class StorageHandler(tornado.web.RequestHandler):
 def make_app(s3client):
 
     handlers = [
-        (r"/api/image-service/store", StorageHandler),
-        (r"/api/image-service/retrieve/([a-zA-Z0-9]+)(?:/([a-z]*))?", StorageHandler),
+        (r"/api/image-service/image", StorageHandler),
+        (r"/api/image-service/image/([a-zA-Z0-9]+)(?:/([a-z]*))?", StorageHandler),
     ]
 
     return StorageApplication(

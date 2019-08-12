@@ -7,13 +7,6 @@ from PIL import Image
 from tornado.options import parse_command_line
 
 
-S3BUCKET = "dos-progimage"
-
-FORMATS = {
-    'PNG': 'RGBA',
-    'JPEG': 'RGB'
-}
-
 logger = logging.getLogger('ProgImage')
 
 
@@ -32,7 +25,7 @@ class RotateHandler(tornado.web.RequestHandler):
         self.finish()
 
     def post(self, degrees):
-        """
+        """ Rotate the provided image by specified degrees
         """
 
         try:
@@ -56,7 +49,7 @@ class RotateHandler(tornado.web.RequestHandler):
 def make_app():
 
     return tornado.web.Application([
-        (r"/api/image-service/rotate/(\d+)", RotateHandler),
+        (r"/api/image-service/transform/rotate/(\d+)", RotateHandler),
     ])
 
 
