@@ -12,6 +12,10 @@ services:
     build: ./rotate
     command: python3 /code/app.py
 
+  filter:
+    build: ./filter
+    command: python3 /code/app.py
+
   web:
     build: ./web
     ports:
