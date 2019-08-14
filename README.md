@@ -12,6 +12,7 @@
 
 # Running
 
+- Edit docker-compose.yml to add  AWS IAM credentials with S3 access to the storage service
 - docker-compose build
 - docker-compose up
 
